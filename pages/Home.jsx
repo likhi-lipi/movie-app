@@ -1,0 +1,45 @@
+import { useState } from "react";
+import SearchBar from "../components/SearchBar";
+import MovieCard from "../components/MovieCard";
+import PaginationButton from "../components/PaginationButton";
+import Loader from "../components/Loader";
+import { searchMovies } from "../utils/api";
+
+export default function Home() {
+  const [query, setQuery] = useState("");
+  const [movies, setMovies] = useState([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  const fetchMovies = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    const data = await searchMovies(query, 1);
+    setMovies(data.Search || []);
+    setPage(1);
+    setLoading(false);
+  };
+
+  const loadMore = async () => {
+    const next = page + 1;
+    const data = await searchMovies(query, next);
+    setMovies((prev) => [...prev, ...(data.Search || [])]);
+    setPage(next);
+  };
+
+  return (
+    <>
+      <SearchBar value={query} onChange={setQuery} onSearch={fetchMovies} />
+
+      {loading && <Loader />}
+
+      <div className="movie-grid">
+        {movies.map((m) => (
+          <MovieCard key={m.imdbID} movie={m} />
+        ))}
+      </div>
+
+      {movies.length > 0 && <PaginationButton onClick={loadMore} />}
+    </>
+  );
+}
